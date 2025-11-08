@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Insertion professionnelle MMI Bordeaux</title>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+<style>
+body { font-family: 'Inter', sans-serif; background:#f7fafc; color:#111827; margin:0; padding:20px; }
+.container { max-width:1000px; margin:auto; background:#fff; padding:28px; border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,0.08);}
+h1 { font-size:28px; color:#1e3a8a; margin-bottom:12px; }
+h2 { margin-top:40px; font-size:22px; color:#1e40af; border-left:4px solid #3b82f6; padding-left:8px; }
+table { width:100%; border-collapse: collapse; margin-top:12px;}
+th, td { padding:8px; border:1px solid #e5e7eb; text-align:left;}
+th { background:#f3f4f6; }
+.chart { width:100%; height:400px; margin:20px 0; }
+input[type="text"] { padding:8px; width:100%; margin:12px 0; border-radius:8px; border:1px solid #d1d5db; }
+footer { font-size:14px; color:#6b7280; margin-top:40px; border-top:1px solid #e5e7eb; padding-top:10px; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Où trouvent un emploi les diplômés MMI Bordeaux ?</h1>
+<p>Cette enquête compile les données internes sur les diplômés MMI Bordeaux et met en avant les entreprises, le type de contrat et la localisation.</p>
+
+<h2>Filtrer par entreprise ou contrat</h2>
+<input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Rechercher par entreprise, contrat ou localisation...">
+
+<table id="emploisTable">
+<thead>
+<tr>
+<th>Prénom</th>
+<th>Nom</th>
+<th>Entreprise</th>
+<th>Contrat</th>
+<th>Localisation</th>
+</tr>
+</thead>
+<tbody>
+<!-- Données générées par JS -->
+</tbody>
+</table>
+
+<h2>Répartition par type de contrat</h2>
+<div id="chart_contrat" class="chart"></div>
+
+<h2>Répartition géographique</h2>
+<div id="chart_localisation" class="chart"></div>
+
+<footer>Sources : suivi interne MMI Bordeaux 2025</footer>
+</div>
+
+<script>
+const diplomes = [
+  {prenom:"Samuel",nom:"ABADIE",entreprise:"allela-collectif",contrat:"Freelance",localisation:"Bordeaux, Nouvelle-Aquitaine, France"},
+  {prenom:"Anaïs",nom:"AKKOUCHE",entreprise:"FAVOREAT DESIGN",contrat:"Contrat en alternance",localisation:"Bordeaux, Nouvelle-Aquitaine, France · Sur site"},
+  {prenom:"Noé",nom:"BRAUD",entreprise:"Agence Eclipse",contrat:"Contrat en alternance",localisation:"Bordeaux, Nouvelle-Aquitaine, France · Sur site"},
+  {prenom:"Louna",nom:"CHARRIEAU",entreprise:"Wamiz",contrat:"Contrat en alternance",localisation:"Ville de Paris, Île-de-France, France · Hybride"},
+  {prenom:"Francois",nom:"DA CAMARA",entreprise:"Neold",contrat:"CDD",localisation:"Bordeaux, Nouvelle-Aquitaine, France"},
+  {prenom:"Anaïs",nom:"DELAVIER",entreprise:"FLOA",contrat:"Contrat en alternance",localisation:"Bordeaux, Nouvelle-Aquitaine, France"},
+  {prenom:"Lucas",nom:"FROIDEFOND",entreprise:"Vistalid",contrat:"Contrat en alternance",localisation:"Bordeaux, Nouvelle-Aquitaine, France"},
+  {prenom:"Bastien",nom:"GARNIER",entreprise:"Les Pilotes du Dimanche",contrat:"Contrat en alternance",localisation:"Noaille"},
+  {prenom:"Mattéo",nom:"GAUTHIER",entreprise:"Lemni",contrat:"CDI",localisation:"Amsterdam, Pays-Bas · Sur site"},
+  {prenom:"Emma",nom:"GUILLAUME",entreprise:"CFA Aspect Aquitaine",contrat:"Contrat en alternance",localisation:"Bordeaux, Nouvelle-Aquitaine, France · Sur site"},
+  {prenom:"Perrine",nom:"JOLY",entreprise:"noesya",contrat:"Stage",localisation:"Bordeaux, Nouvelle-Aquitaine, France"},
+  {prenom:"Jeanne",nom:"JONCHERAY",entreprise:"UIMM GIRONDE-LANDES",contrat:"Contrat en alternance",localisation:"Bruges, Nouvelle-Aquitaine, France · Sur site"},
+  {prenom:"Louis",nom:"LASSERRE",entreprise:"Yalink",contrat:"Contrat en alternance",localisation:"Bordeaux, Nouvelle-Aquitaine, France · Sur site"},
+  {prenom:"Maxime",nom:"LUST",entreprise:"FAVOREAT DESIGN",contrat:"Contrat en alternance",localisation:"Bordeaux, Nouvelle-Aquitaine, France"},
+  {prenom:"Alexandra",nom:"MALLARD",entreprise:"Ville de Surgères",contrat:"CDD",localisation:"Surgères, Nouvelle-Aquitaine, France · Sur site"},
+  {prenom:"Clara",nom:"MANHES",entreprise:"yukan",contrat:"Contrat en alternance",localisation:"Toulouse, Occitanie, France"},
+  {prenom:"Thomas",nom:"MESNIER",entreprise:"French Tooth",contrat:"Contrat en alternance",localisation:"Étalonneur / Monteur image"},
+  {prenom:"Audrey",nom:"MILLOT",entreprise:"Monzo Bank",contrat:"CDD",localisation:"Executive Assistant"}
+];
+
+// Génération du tableau
+const tbody = document.querySelector('#emploisTable tbody');
+diplomes.forEach(d => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${d.prenom}</td><td>${d.nom}</td><td>${d.entreprise}</td><td>${d.contrat}</td><td>${d.localisation}</td>`;
+  tbody.appendChild(tr);
+});
+
+// Filtrage
+function filterTable() {
+  const input = document.getElementById("searchInput").value.toLowerCase();
+  const rows = tbody.getElementsByTagName("tr");
+  for (let row of rows) {
+    row.style.display = Array.from(row.getElementsByTagName("td")).some(td => td.textContent.toLowerCase().includes(input)) ? "" : "none";
+  }
+}
+
+// Google Charts
+google.charts.load('current', {'packages':['corechart']});
+google.charts.setOnLoadCallback(drawCharts);
+
+function drawCharts() {
+  // Répartition par contrat
+  const contratCounts = {};
+  diplomes.forEach(d => { 
+    if(d.contrat) contratCounts[d.contrat] = (contratCounts[d.contrat] || 0)+1; 
+  });
+  const dataContrat = google.visualization.arrayToDataTable([['Contrat','Nombre']].concat(Object.entries(contratCounts)));
+  const chartContrat = new google.visualization.PieChart(document.getElementById('chart_contrat'));
+  chartContrat.draw(dataContrat,{title:'Répartition par type de contrat',pieHole:0.4,animation:{startup:true,duration:1000,easing:'out'}});
+
+  // Répartition géographique
+  const localisationCounts = {};
+  diplomes.forEach(d => { 
+    if(d.localisation) localisationCounts[d.localisation.split(' ·')[0]] = (localisationCounts[d.localisation.split(' ·')[0]] || 0)+1; 
+  });
+  const dataLoc = google.visualization.arrayToDataTable([['Ville','Nombre']].concat(Object.entries(localisationCounts)));
+  const chartLoc = new google.visualization.ColumnChart(document.getElementById('chart_localisation'));
+  chartLoc.draw(dataLoc,{title:'Répartition géographique',animation:{startup:true,duration:1000,easing:'out'},legend:'none',vAxis:{minValue:0}});
+}
+</script>
+</body>
+</html>
+
